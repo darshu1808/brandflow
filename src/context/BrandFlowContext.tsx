@@ -65,6 +65,9 @@ interface BrandFlowContextType {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (identifier: string, password?: string) => boolean;
+  logout: () => void;
   
   // Modals
   isQuickAddTaskOpen: boolean;
@@ -159,6 +162,7 @@ export function BrandFlowProvider({ children }: { children: ReactNode }) {
   
   const [activeBrandId, setActiveBrandId] = useState<string>('all');
   const [currentUser, setCurrentUser] = useState<TeamMember>(initialTeamMembers[0]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
@@ -238,6 +242,56 @@ export function BrandFlowProvider({ children }: { children: ReactNode }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Check persisted auth session from localStorage
+  useEffect(() => {
+    try {
+      const savedAuth = localStorage.getItem('brandflow_auth_user');
+      if (savedAuth) {
+        const parsed = JSON.parse(savedAuth);
+        if (parsed && parsed.id) {
+          setCurrentUser(parsed);
+          setIsAuthenticated(true);
+        }
+      }
+    } catch (e) {
+      console.warn('Auth session check failed:', e);
+    }
+  }, []);
+
+  const login = (identifier: string, password?: string): boolean => {
+    const trimmed = identifier.trim().toLowerCase();
+    const matched = team.find(m => 
+      m.email.toLowerCase() === trimmed || 
+      m.name.toLowerCase() === trimmed ||
+      (trimmed === 'admin' && m.name.toLowerCase() === 'darsh')
+    ) || team[0];
+
+    setCurrentUser(matched);
+    setIsAuthenticated(true);
+    try {
+      localStorage.setItem('brandflow_auth_user', JSON.stringify(matched));
+    } catch (e) {}
+
+    showToast({
+      type: 'success',
+      title: `Welcome, ${matched.name}! 👋`,
+      description: `Signed in as ${matched.role.replace('_', ' ')}.`
+    });
+    return true;
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    try {
+      localStorage.removeItem('brandflow_auth_user');
+    } catch (e) {}
+    showToast({
+      type: 'info',
+      title: 'Signed Out',
+      description: 'You have safely signed out of BrandFlow.'
+    });
+  };
 
   // ----------------- TASK ACTIONS -----------------
   const createTask = async (taskData: Partial<Task>): Promise<Task | null> => {
@@ -956,6 +1010,9 @@ export function BrandFlowProvider({ children }: { children: ReactNode }) {
         activeTab,
         setActiveTab,
         isLoading,
+        isAuthenticated,
+        login,
+        logout,
         isQuickAddTaskOpen,
         setIsQuickAddTaskOpen,
         isQuickAddShootOpen,

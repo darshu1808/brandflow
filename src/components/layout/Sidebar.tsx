@@ -25,7 +25,8 @@ import {
   Share2,
   Sparkles,
   Command,
-  ChevronUp
+  ChevronUp,
+  LogOut
 } from 'lucide-react';
 import { useBrandFlow } from '@/context/BrandFlowContext';
 
@@ -42,6 +43,7 @@ export default function Sidebar() {
     meetings,
     notifications,
     currentUser,
+    logout,
     setIsQuickAddTaskOpen,
     setIsQuickAddShootOpen,
     setIsQuickAddPostOpen,
@@ -315,22 +317,34 @@ export default function Sidebar() {
 
       {/* Personal User Footer (Sole Operator - No Switcher Bloat) */}
       <div className="p-3 border-t border-white/[0.08]">
-        <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-          <img 
-            src={currentUser.avatar} 
-            alt={currentUser.name}
-            className="w-8 h-8 rounded-full object-cover border border-white/20 flex-shrink-0"
-          />
+        <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex items-center gap-2.5 truncate">
+            <img 
+              src={currentUser.avatar} 
+              alt={currentUser.name}
+              className="w-8 h-8 rounded-full object-cover border border-white/20 flex-shrink-0"
+            />
+            {!isCollapsed && (
+              <div className="truncate flex-1">
+                <div className="text-xs font-semibold text-white truncate">
+                  {currentUser.name}
+                </div>
+                <div className="text-[10px] text-emerald-400 truncate font-medium flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span>{currentUser.name === 'Darsh' ? 'Brand Manager (You)' : currentUser.role.replace('_', ' ')}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {!isCollapsed && (
-            <div className="truncate flex-1">
-              <div className="text-xs font-semibold text-white truncate">
-                {currentUser.name}
-              </div>
-              <div className="text-[10px] text-emerald-400 truncate font-medium flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span>Brand Manager (You)</span>
-              </div>
-            </div>
+            <button
+              onClick={logout}
+              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-white/[0.08] rounded-lg transition-colors flex-shrink-0"
+              title="Sign out of BrandFlow"
+            >
+              <LogOut size={15} />
+            </button>
           )}
         </div>
       </div>

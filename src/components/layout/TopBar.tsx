@@ -9,9 +9,9 @@ import {
   Share2, 
   FileSpreadsheet, 
   Cloud, 
-  Sparkles,
   Command,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
 import { useBrandFlow } from '@/context/BrandFlowContext';
 
@@ -31,6 +31,7 @@ export default function TopBar() {
     setIsWhatsAppSubmitOpen,
     setIsImportExportOpen,
     setIsSearchModalOpen,
+    logout,
     settings
   } = useBrandFlow();
 
@@ -215,6 +216,22 @@ export default function TopBar() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* User Profile & Sign Out */}
+        <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+          <img
+            src={currentUser.avatar}
+            alt={currentUser.name}
+            className="w-7 h-7 rounded-full object-cover border border-slate-200"
+          />
+          <button
+            onClick={logout}
+            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+            title="Sign out of BrandFlow"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </header>
