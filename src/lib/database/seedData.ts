@@ -16,8 +16,8 @@ import {
 export const initialTeamMembers: TeamMember[] = [
   {
     id: 'user-1',
-    name: 'Darsh',
-    email: 'darsh@brandflow.io',
+    name: 'Darsh_Pandav',
+    email: 'darshanpandav2@gmail.com',
     role: 'brand_manager',
     department: 'Brand Management',
     assignedBrandIds: ['brand-1', 'brand-2', 'brand-3', 'brand-4', 'brand-5'],

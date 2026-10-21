@@ -261,10 +261,24 @@ export function BrandFlowProvider({ children }: { children: ReactNode }) {
 
   const login = (identifier: string, password?: string): boolean => {
     const trimmed = identifier.trim().toLowerCase();
+    
+    // Check password if provided: require 1808
+    if (password && password.trim() !== '1808') {
+      showToast({
+        type: 'error',
+        title: 'Authentication Failed',
+        description: 'Incorrect password. Please enter the valid PIN/Password (1808).'
+      });
+      return false;
+    }
+
     const matched = team.find(m => 
       m.email.toLowerCase() === trimmed || 
       m.name.toLowerCase() === trimmed ||
-      (trimmed === 'admin' && m.name.toLowerCase() === 'darsh')
+      m.name.toLowerCase().replace(/\s+/g, '_') === trimmed ||
+      (trimmed === 'darsh_pandav' && m.name.toLowerCase().includes('darsh')) ||
+      (trimmed === 'darsh pandav' && m.name.toLowerCase().includes('darsh')) ||
+      (trimmed === 'admin' && m.name.toLowerCase().includes('darsh'))
     ) || team[0];
 
     setCurrentUser(matched);
@@ -276,7 +290,7 @@ export function BrandFlowProvider({ children }: { children: ReactNode }) {
     showToast({
       type: 'success',
       title: `Welcome, ${matched.name}! 👋`,
-      description: `Signed in as ${matched.role.replace('_', ' ')}.`
+      description: `Signed in as Brand Manager.`
     });
     return true;
   };

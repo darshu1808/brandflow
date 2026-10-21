@@ -18,8 +18,8 @@ import { useBrandFlow } from '@/context/BrandFlowContext';
 export default function LoginView() {
   const { login, team } = useBrandFlow();
 
-  const [identifier, setIdentifier] = useState('Darsh');
-  const [password, setPassword] = useState('••••••••');
+  const [identifier, setIdentifier] = useState('Darsh_Pandav');
+  const [password, setPassword] = useState('1808');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,7 +28,12 @@ export default function LoginView() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier.trim()) {
-      setErrorMessage('Please enter your name or email.');
+      setErrorMessage('Please enter your username or email.');
+      return;
+    }
+
+    if (password.trim() !== '1808') {
+      setErrorMessage('❌ Incorrect Password. Please enter the correct PIN (1808).');
       return;
     }
 
@@ -36,18 +41,23 @@ export default function LoginView() {
     setErrorMessage('');
 
     setTimeout(() => {
-      login(identifier, password);
+      const ok = login(identifier, password);
+      if (!ok) {
+        setErrorMessage('❌ Authentication failed. Please check credentials.');
+      }
       setIsSubmitting(false);
-    }, 400);
+    }, 300);
   };
 
   const handleQuickLogin = (name: string) => {
-    setIdentifier(name);
+    const loginUser = name.includes('Darsh') ? 'Darsh_Pandav' : name;
+    setIdentifier(loginUser);
+    setPassword('1808');
     setIsSubmitting(true);
     setTimeout(() => {
-      login(name);
+      login(loginUser, '1808');
       setIsSubmitting(false);
-    }, 300);
+    }, 250);
   };
 
   return (
@@ -207,10 +217,10 @@ export default function LoginView() {
                   />
                   <div className="min-w-0 flex-1">
                     <div className="text-xs font-bold text-slate-200 group-hover:text-white truncate">
-                      {member.name}
+                      {member.name.includes('Darsh') ? 'Darsh_Pandav' : member.name}
                     </div>
                     <div className="text-[10px] text-slate-400 truncate">
-                      {member.name === 'Darsh' ? 'Brand Manager' : member.department}
+                      {member.name.includes('Darsh') ? 'Brand Manager (Owner)' : member.department}
                     </div>
                   </div>
                 </button>
