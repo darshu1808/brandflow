@@ -3,259 +3,159 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
-import { ArrowLeft, ArrowRight, ExternalLink, ChevronLeft, ChevronRight, X, Play, Pause, Volume2, VolumeX, Film, Video, Instagram, Linkedin, Mail, MessageCircle, MapPin, Phone, Send, Calendar, Wrench, Briefcase, Building2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ExternalLink, ChevronLeft, ChevronRight, X, Play, Pause, Volume2, VolumeX, Maximize2, Film, Video, Image as ImageIcon, Instagram, Linkedin, Mail, MessageCircle, MapPin, Phone, Send, Calendar, Wrench, Briefcase, Building2 } from 'lucide-react'
 import { useContent } from '@/context/ContentContext'
 import Navigation from '@/components/Navigation'
 import CustomCursor from '@/components/CustomCursor'
 
-// Interactive inView Carousel Row for Project Reels
-function ProjectReelsRow({
-  items,
-  label,
-  accentColor,
-  aspectRatio
+// Interactive Hover & Touch Aware Video Card for 3-Column Grid
+function ProjectVideoCard({
+  item,
+  aspectRatio = 'vertical',
+  onExpand
 }: {
-  items: any[],
-  label: string,
-  accentColor: string,
-  aspectRatio: 'verticalVideo' | 'horizontal'
+  item: { url: string; caption?: string; id?: string },
+  aspectRatio?: 'vertical' | 'horizontal',
+  onExpand?: (url: string) => void
 }) {
-  const rowRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const isInView = useInView(rowRef, { amount: 0.3, once: false })
-  const [centerIndex, setCenterIndex] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(true)
+  const isInView = useInView(cardRef, { amount: 0.5, once: false })
+  const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(true)
-  const [key, setKey] = useState(0)
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
 
-  const normalizedItems = (items || []).map((it, idx) => {
-    if (typeof it === 'string') {
-      return { id: String(idx), url: it, caption: '' }
-    }
-    return {
-      id: it.id || String(idx),
-      url: it.url || it,
-      caption: it.caption || ''
-    }
-  }).filter(it => Boolean(it.url))
-
-  if (normalizedItems.length === 0) return null
-
-  const nextSlide = useCallback(() => {
-    setCenterIndex(prev => (prev + 1) % normalizedItems.length)
-    setKey(prev => prev + 1)
-  }, [normalizedItems.length])
-
-  const prevSlide = useCallback(() => {
-    setCenterIndex(prev => (prev - 1 + normalizedItems.length) % normalizedItems.length)
-    setKey(prev => prev + 1)
-  }, [normalizedItems.length])
-
-  const togglePlayPause = useCallback(() => {
-    setIsPlaying(prev => !prev)
-  }, [])
-
-  const toggleMute = useCallback(() => {
-    setIsMuted(prev => !prev)
-  }, [])
-
-  // Auto play/pause only when scrolled into view
+  // Detect touch device (phone / tablet)
   useEffect(() => {
-    if (videoRef.current) {
-      if (isPlaying && isInView) {
-        videoRef.current.play().catch(() => {})
-      } else {
-        videoRef.current.pause()
-      }
-      videoRef.current.muted = isMuted
-    }
-  }, [isPlaying, isMuted, isInView, centerIndex])
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0)
+  }, [])
 
-  const getVisibleItems = () => {
-    if (normalizedItems.length === 1) {
-      return [{ ...normalizedItems[0], position: 0, originalIndex: 0 }]
+  // Desktop hover play / pause
+  const handleMouseEnter = () => {
+    if (!isTouchDevice && videoRef.current) {
+      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {})
     }
-    const result = []
-    for (let offset = -1; offset <= 1; offset++) {
-      let idx = centerIndex + offset
-      if (idx < 0) idx = normalizedItems.length + idx
-      if (idx >= normalizedItems.length) idx = idx - normalizedItems.length
-      result.push({ ...normalizedItems[idx], position: offset, originalIndex: idx })
-    }
-    return result
   }
 
-  const visibleItems = getVisibleItems()
+  const handleMouseLeave = () => {
+    if (!isTouchDevice && videoRef.current) {
+      videoRef.current.pause()
+      setIsPlaying(false)
+    }
+  }
 
-  const dims = aspectRatio === 'verticalVideo'
-    ? { containerClass: 'w-[160px] h-[284px] md:w-[240px] md:h-[427px]', centerClass: 'w-[200px] h-[356px] md:w-[300px] md:h-[533px]', width: 300 }
-    : { containerClass: 'w-[200px] h-[113px] md:w-[380px] md:h-[213px]', centerClass: 'w-[260px] h-[146px] md:w-[480px] md:h-[270px]', width: 440 }
+  // Mobile / Phone: Auto-play preview when scrolled into center of screen
+  useEffect(() => {
+    if (isTouchDevice && videoRef.current) {
+      if (isInView) {
+        videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {})
+      } else {
+        videoRef.current.pause()
+        setIsPlaying(false)
+      }
+    }
+  }, [isInView, isTouchDevice])
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!videoRef.current) return
+    if (isPlaying) {
+      videoRef.current.pause()
+      setIsPlaying(false)
+    } else {
+      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {})
+    }
+  }
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (videoRef.current) {
+      const nextMuted = !isMuted
+      videoRef.current.muted = nextMuted
+      setIsMuted(nextMuted)
+    }
+  }
 
   return (
     <div
-      ref={rowRef}
-      className="py-6 md:py-10"
-      style={{ opacity: isInView ? 1 : 0.4, transition: 'opacity 0.5s ease' }}
+      ref={cardRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={togglePlay}
+      className={`group relative overflow-hidden rounded-3xl bg-black border border-white/10 hover:border-accent-blue/50 transition-all duration-300 shadow-2xl cursor-pointer ${
+        aspectRatio === 'vertical' ? 'aspect-[9/16]' : 'aspect-video'
+      }`}
     >
-      <div className={`relative flex items-center justify-center ${aspectRatio === 'verticalVideo' ? 'h-[420px] md:h-[620px]' : 'h-[280px] md:h-[420px]'}`}>
-        {/* Label */}
-        <div className="absolute left-1/2 -translate-x-1/2 z-40 text-center top-0">
-          <h3 className={`text-lg md:text-2xl font-medium ${accentColor}`}>{label}</h3>
+      <video
+        ref={videoRef}
+        src={item.url}
+        loop
+        playsInline
+        muted={isMuted}
+        preload="metadata"
+        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+      />
+
+      {/* Dark gradient overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40 pointer-events-none transition-opacity duration-300 ${
+        isPlaying ? 'opacity-30 group-hover:opacity-50' : 'opacity-70'
+      }`} />
+
+      {/* Center Play Button indicator when paused */}
+      {!isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+          <div className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-2xl group-hover:scale-110 group-hover:bg-accent-blue/80 transition-all">
+            <Play className="w-6 h-6 ml-0.5 fill-white text-white" />
+          </div>
         </div>
+      )}
 
-        {/* Prev Button */}
-        {normalizedItems.length > 1 && (
+      {/* Top Left: Status badge */}
+      <div className="absolute top-3 left-3 z-30 flex items-center gap-2">
+        <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[10px] sm:text-xs font-medium text-white/90 border border-white/10 flex items-center gap-1.5 shadow-sm">
+          <span className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-green-400 animate-pulse' : 'bg-white/40'}`} />
+          {isPlaying ? 'Playing' : (isTouchDevice ? 'Tap to Play' : 'Hover to Play')}
+        </span>
+      </div>
+
+      {/* Top Right Controls: Mute/Unmute & Fullscreen */}
+      <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5">
+        <button
+          onClick={toggleMute}
+          className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-black/80 transition-all"
+          title={isMuted ? 'Unmute' : 'Mute'}
+        >
+          {isMuted ? <VolumeX className="w-3.5 h-3.5 text-white/80" /> : <Volume2 className="w-3.5 h-3.5 text-accent-blue" />}
+        </button>
+        {onExpand && (
           <button
-            onClick={prevSlide}
-            className="absolute left-2 md:left-4 z-50 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-white"
-            aria-label="Previous reel"
+            onClick={(e) => {
+              e.stopPropagation()
+              onExpand(item.url)
+            }}
+            className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-black/80 transition-all"
+            title="Expand Fullscreen"
           >
-            <ChevronLeft className="w-4 h-4 md:w-6 md:h-6" />
-          </button>
-        )}
-
-        {/* Cards */}
-        <div className="relative flex items-center justify-center gap-2 md:gap-4" style={{ width: dims.width }}>
-          {visibleItems.map((item: any) => {
-            const isCenter = item.position === 0
-            const isLeft = item.position === -1
-
-            return (
-              <motion.div
-                key={`${item.id}-${item.position}-${key}`}
-                className={`absolute transition-all duration-500 ease-out ${
-                  isCenter ? dims.centerClass : dims.containerClass
-                } ${isCenter ? 'z-30 scale-100 shadow-2xl' : 'z-10 scale-75 opacity-40 blur-[1px]'}`}
-                animate={
-                  normalizedItems.length === 1
-                    ? { left: '50%', x: '-50%', scale: 1, opacity: 1, zIndex: 30 }
-                    : {
-                        left: isCenter ? '50%' : isLeft ? '15%' : '85%',
-                        x: '-50%',
-                        scale: isCenter ? 1 : 0.75,
-                        opacity: isCenter ? 1 : 0.4,
-                        zIndex: isCenter ? 30 : 10
-                      }
-                }
-              >
-                <div className="w-full h-full rounded-2xl overflow-hidden border-2 border-white/10 bg-black shadow-2xl relative">
-                  <video
-                    ref={isCenter ? videoRef : null}
-                    src={item.url}
-                    loop
-                    playsInline
-                    muted={isMuted}
-                    className="w-full h-full object-cover"
-                  />
-
-                  {/* Sound Toggle (Center Only) */}
-                  {isCenter && (
-                    <button
-                      onClick={toggleMute}
-                      className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 hover:bg-black/80 transition-all text-white"
-                      title={isMuted ? "Unmute" : "Mute"}
-                    >
-                      {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                    </button>
-                  )}
-
-                  {/* Play/Pause (Center Only) */}
-                  {isCenter && (
-                    <button
-                      onClick={togglePlayPause}
-                      className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 hover:bg-black/80 transition-all text-white"
-                      title={isPlaying ? "Pause" : "Play"}
-                    >
-                      {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                    </button>
-                  )}
-
-                  {/* Caption */}
-                  {item.caption && isCenter && (
-                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                      <p className="text-white text-xs line-clamp-2">{item.caption}</p>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )
-          })}
-        </div>
-
-        {/* Next Button */}
-        {normalizedItems.length > 1 && (
-          <button
-            onClick={nextSlide}
-            className="absolute right-2 md:right-4 z-50 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-white"
-            aria-label="Next reel"
-          >
-            <ChevronRight className="w-4 h-4 md:w-6 md:h-6" />
+            <Maximize2 className="w-3.5 h-3.5 text-white/80" />
           </button>
         )}
       </div>
 
-      {/* Dots Indicator */}
-      {normalizedItems.length > 1 && (
-        <div className="flex justify-center gap-1.5 mt-4">
-          {normalizedItems.map((_: any, i: number) => (
-            <button
-              key={i}
-              onClick={() => { setCenterIndex(i); setIsPlaying(true); setKey(prev => prev + 1) }}
-              className={`transition-all duration-300 ${
-                centerIndex === i ? 'w-5 h-1.5 bg-white rounded-full' : 'w-1.5 h-1.5 bg-white/30 rounded-full hover:bg-white/50'
-              }`}
-              aria-label={`Go to slide ${i + 1}`}
-            />
-          ))}
+      {/* Bottom Bar: Caption & Play/Pause toggle */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 z-30 flex items-end justify-between gap-3 bg-gradient-to-t from-black/95 via-black/60 to-transparent">
+        <div className="flex-1 min-w-0">
+          {item.caption ? (
+            <p className="text-white text-xs sm:text-sm font-medium line-clamp-2 drop-shadow-md">{item.caption}</p>
+          ) : (
+            <p className="text-white/60 text-[11px]">{isTouchDevice ? 'Tap to toggle playback' : 'Hover to preview'}</p>
+          )}
         </div>
-      )}
-    </div>
-  )
-}
-
-// Single Video InView Player (plays only when scrolled to, never prematurely)
-function InViewSingleVideo({ src }: { src: string }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const isInView = useInView(containerRef, { amount: 0.3, once: false })
-  const [isPlaying, setIsPlaying] = useState(true)
-  const [isMuted, setIsMuted] = useState(true)
-
-  useEffect(() => {
-    if (videoRef.current) {
-      if (isPlaying && isInView) {
-        videoRef.current.play().catch(() => {})
-      } else {
-        videoRef.current.pause()
-      }
-      videoRef.current.muted = isMuted
-    }
-  }, [isPlaying, isMuted, isInView])
-
-  return (
-    <div ref={containerRef} className="relative aspect-video rounded-3xl overflow-hidden bg-white/5 border border-white/10 shadow-2xl">
-      <video
-        ref={videoRef}
-        src={src}
-        loop
-        muted={isMuted}
-        playsInline
-        className="w-full h-full object-contain"
-      />
-      <div className="absolute bottom-4 right-4 flex items-center gap-2">
         <button
-          onClick={() => setIsMuted(!isMuted)}
-          className="px-3 py-2 bg-black/60 backdrop-blur-sm rounded-lg text-white text-sm flex items-center gap-2 hover:bg-black/80 transition-colors"
+          onClick={togglePlay}
+          className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/40 transition-all shrink-0"
+          title={isPlaying ? 'Pause' : 'Play'}
         >
-          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          {isMuted ? 'Unmute' : 'Mute'}
-        </button>
-        <button
-          onClick={() => setIsPlaying(!isPlaying)}
-          className="px-3 py-2 bg-black/60 backdrop-blur-sm rounded-lg text-white text-sm flex items-center gap-2 hover:bg-black/80 transition-colors"
-        >
-          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          {isPlaying ? 'Pause' : 'Play'}
+          {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
         </button>
       </div>
     </div>
@@ -270,7 +170,7 @@ export default function ProjectDetailsPage() {
   const [prevProject, setPrevProject] = useState<any>(null)
   const [nextProject, setNextProject] = useState<any>(null)
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
-  const [videoPlaying, setVideoPlaying] = useState(true)
+  const [activeVideoModal, setActiveVideoModal] = useState<string | null>(null)
 
   useEffect(() => {
     if (slug && content.projects?.items) {
@@ -556,100 +456,201 @@ export default function ProjectDetailsPage() {
             </div>
           </motion.div>
 
-          {/* Project Reels & Videos Showcase */}
+          {/* Project Media, Reels & Posts (3-Column Grid Layout) */}
           {((currentProject.verticalReels && currentProject.verticalReels.length > 0) ||
             (currentProject.horizontalReels && currentProject.horizontalReels.length > 0) ||
-            currentProject.video) && (
+            currentProject.video ||
+            gallery.length > 0) && (
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="mb-16"
+              className="mb-16 space-y-16"
             >
-              <div className="text-center mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Project Media & Reels</h2>
-                <p className="text-white/40 text-sm">Interactive showcase of video creatives and reels for this project.</p>
+              {/* Section Header */}
+              <div className="text-center">
+                <h2 className="text-2xl md:text-4xl font-bold text-white mb-2">
+                  Project <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-blue via-accent-purple to-white">Media & Creatives</span>
+                </h2>
+                <p className="text-white/40 text-xs sm:text-sm max-w-xl mx-auto">
+                  Interactive 3-column showcase of video reels, horizontal films, and creative campaign posts.
+                </p>
               </div>
 
-              {/* Vertical Reels (9:16) */}
+              {/* 1. Vertical Reels (9:16) - 3 Column Grid */}
               {currentProject.verticalReels && currentProject.verticalReels.length > 0 && (
-                <ProjectReelsRow
-                  items={currentProject.verticalReels}
-                  label="Vertical Reels (9:16)"
-                  accentColor="text-purple-400"
-                  aspectRatio="verticalVideo"
-                />
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                        <Film className="w-5 h-5 text-purple-400" /> Vertical Reels (9:16)
+                      </h3>
+                      <p className="text-xs text-white/40 mt-1">
+                        Hover with mouse to play • On phone, scroll into view or tap to play
+                      </p>
+                    </div>
+                    <span className="text-xs px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-medium">
+                      {currentProject.verticalReels.length} Reels
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {currentProject.verticalReels.map((reel: any, idx: number) => {
+                      const normalized = typeof reel === 'string' ? { url: reel } : reel
+                      return (
+                        <ProjectVideoCard
+                          key={normalized.id || idx}
+                          item={normalized}
+                          aspectRatio="vertical"
+                          onExpand={(url) => setActiveVideoModal(url)}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
               )}
 
-              {/* Horizontal Videos (16:9) */}
+              {/* 2. Horizontal Videos (16:9) - 3 Column Grid */}
               {currentProject.horizontalReels && currentProject.horizontalReels.length > 0 && (
-                <ProjectReelsRow
-                  items={currentProject.horizontalReels}
-                  label="Horizontal Videos (16:9)"
-                  accentColor="text-blue-400"
-                  aspectRatio="horizontal"
-                />
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                        <Video className="w-5 h-5 text-blue-400" /> Horizontal Videos (16:9)
+                      </h3>
+                      <p className="text-xs text-white/40 mt-1">
+                        Hover with mouse to play • On phone, scroll into view or tap to play
+                      </p>
+                    </div>
+                    <span className="text-xs px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-medium">
+                      {currentProject.horizontalReels.length} Videos
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {currentProject.horizontalReels.map((reel: any, idx: number) => {
+                      const normalized = typeof reel === 'string' ? { url: reel } : reel
+                      return (
+                        <ProjectVideoCard
+                          key={normalized.id || idx}
+                          item={normalized}
+                          aspectRatio="horizontal"
+                          onExpand={(url) => setActiveVideoModal(url)}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
               )}
 
-              {/* Legacy Single Video Fallback (InView aware, no premature autoplay) */}
+              {/* Legacy Single Video Fallback */}
               {(!currentProject.verticalReels || currentProject.verticalReels.length === 0) &&
                (!currentProject.horizontalReels || currentProject.horizontalReels.length === 0) &&
                currentProject.video && (
-                <InViewSingleVideo src={currentProject.video} />
+                <div className="max-w-2xl mx-auto">
+                  <h3 className="text-xl font-bold text-white mb-4 text-center">Featured Project Video</h3>
+                  <ProjectVideoCard
+                    item={{ url: currentProject.video }}
+                    aspectRatio="horizontal"
+                    onExpand={(url) => setActiveVideoModal(url)}
+                  />
+                </div>
+              )}
+
+              {/* 3. Project Posts & Campaign Creatives (3-Column Grid) */}
+              {gallery.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                        <ImageIcon className="w-5 h-5 text-accent-blue" /> Campaign Posts & Creative Assets
+                      </h3>
+                      <p className="text-xs text-white/40 mt-1">
+                        High-converting promotional posts, posters, and campaign imagery
+                      </p>
+                    </div>
+                    <span className="text-xs px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-medium">
+                      {gallery.length} Posts
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {gallery.map((image: string, i: number) => (
+                      <div
+                        key={i}
+                        className="group relative aspect-[4/5] rounded-3xl overflow-hidden cursor-pointer bg-black/60 border border-white/10 hover:border-accent-blue/50 transition-all duration-300 shadow-2xl"
+                        onClick={() => setLightboxImage(image)}
+                      >
+                        <img
+                          src={image}
+                          alt={`${currentProject.title} post ${i + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-white font-medium">Creative Post {i + 1}</span>
+                            <div className="w-9 h-9 rounded-full bg-accent-blue/80 backdrop-blur-md flex items-center justify-center text-white shadow-lg">
+                              <ExternalLink className="w-4 h-4" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </motion.div>
           )}
 
-          {/* Project Gallery */}
-          {gallery.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="mb-12"
-            >
-              <h2 className="text-2xl font-bold text-white mb-6">Project Gallery</h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {gallery.map((image: string, i: number) => (
-                  <div
-                    key={i}
-                    className="relative aspect-video rounded-2xl overflow-hidden cursor-pointer group"
-                    onClick={() => setLightboxImage(image)}
-                  >
-                    <img
-                      src={image}
-                      alt={`${currentProject.title} gallery ${i + 1}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                      <ExternalLink className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
+          {/* Video Fullscreen Modal */}
+          <AnimatePresence>
+            {activeVideoModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 md:p-8"
+                onClick={() => setActiveVideoModal(null)}
+              >
+                <button
+                  onClick={() => setActiveVideoModal(null)}
+                  className="absolute top-5 right-5 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
+                  aria-label="Close video"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+                <div className="relative max-w-4xl max-h-[85vh] w-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <video
+                    src={activeVideoModal}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* Lightbox */}
+          {/* Lightbox for Images */}
           <AnimatePresence>
             {lightboxImage && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-8"
+                className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 md:p-8"
                 onClick={() => setLightboxImage(null)}
               >
                 <button
-                  className="absolute top-4 right-4 p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
+                  className="absolute top-5 right-5 p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors z-50"
                   onClick={() => setLightboxImage(null)}
+                  aria-label="Close image"
                 >
                   <X className="w-6 h-6" />
                 </button>
                 <img
                   src={lightboxImage}
                   alt="Lightbox"
-                  className="max-w-full max-h-full object-contain rounded-lg"
+                  className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
                   onClick={(e) => e.stopPropagation()}
                 />
               </motion.div>
