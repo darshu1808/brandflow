@@ -208,10 +208,18 @@ export default function AdminPanel() {
           const complete = {
             ...defaultContent,
             ...fileContent,
+            hero: { ...defaultContent.hero, ...(fileContent.hero || {}), stats: fileContent.hero?.stats || defaultContent.hero.stats || [] },
+            about: { ...defaultContent.about, ...(fileContent.about || {}), skills: fileContent.about?.skills || defaultContent.about.skills || [] },
+            services: { ...defaultContent.services, ...(fileContent.services || {}), items: fileContent.services?.items || defaultContent.services.items || [] },
+            skills: { ...defaultContent.skills, ...(fileContent.skills || {}), items: fileContent.skills?.items || defaultContent.skills.items || [] },
+            testimonials: { ...defaultContent.testimonials, ...(fileContent.testimonials || {}), items: fileContent.testimonials?.items || defaultContent.testimonials.items || [] },
+            workflow: { ...defaultContent.workflow, ...(fileContent.workflow || {}), steps: fileContent.workflow?.steps || defaultContent.workflow.steps || [] },
+            timeline: { ...defaultContent.timeline, ...(fileContent.timeline || {}), items: fileContent.timeline?.items || defaultContent.timeline.items || [] },
+            contact: { ...defaultContent.contact, ...(fileContent.contact || {}), socials: fileContent.contact?.socials || defaultContent.contact.socials || [] },
+            settings: { ...defaultContent.settings, ...(fileContent.settings || {}) },
             brands: fileContent.brands || defaultContent.brands,
             media: fileContent.media || defaultContent.media,
             projects: fileContent.projects || defaultContent.projects,
-            settings: fileContent.settings || defaultContent.settings,
             contentShowcase: fileContent.contentShowcase || defaultContent.contentShowcase
           }
           setContent(complete)
@@ -231,10 +239,18 @@ export default function AdminPanel() {
           const complete = {
             ...defaultContent,
             ...parsed,
+            hero: { ...defaultContent.hero, ...(parsed.hero || {}), stats: parsed.hero?.stats || defaultContent.hero.stats || [] },
+            about: { ...defaultContent.about, ...(parsed.about || {}), skills: parsed.about?.skills || defaultContent.about.skills || [] },
+            services: { ...defaultContent.services, ...(parsed.services || {}), items: parsed.services?.items || defaultContent.services.items || [] },
+            skills: { ...defaultContent.skills, ...(parsed.skills || {}), items: parsed.skills?.items || defaultContent.skills.items || [] },
+            testimonials: { ...defaultContent.testimonials, ...(parsed.testimonials || {}), items: parsed.testimonials?.items || defaultContent.testimonials.items || [] },
+            workflow: { ...defaultContent.workflow, ...(parsed.workflow || {}), steps: parsed.workflow?.steps || defaultContent.workflow.steps || [] },
+            timeline: { ...defaultContent.timeline, ...(parsed.timeline || {}), items: parsed.timeline?.items || defaultContent.timeline.items || [] },
+            contact: { ...defaultContent.contact, ...(parsed.contact || {}), socials: parsed.contact?.socials || defaultContent.contact.socials || [] },
+            settings: { ...defaultContent.settings, ...(parsed.settings || {}) },
             brands: parsed.brands || defaultContent.brands,
             media: parsed.media || defaultContent.media,
             projects: parsed.projects || defaultContent.projects,
-            settings: parsed.settings || defaultContent.settings,
             contentShowcase: parsed.contentShowcase || defaultContent.contentShowcase
           }
           setContent(complete)
@@ -825,14 +841,14 @@ export default function AdminPanel() {
                 </div>
                 <div className="bg-gray-800 p-4 rounded-lg">
                   <h3 className="font-semibold mb-4">Stats</h3>
-                  {content.hero.stats.map((stat: any, i: number) => (
+                  {(content.hero?.stats || []).map((stat: any, i: number) => (
                     <div key={i} className="flex gap-4 mb-2">
-                      <input type="text" value={stat.value} onChange={(e) => { const newStats = [...content.hero.stats]; newStats[i].value = e.target.value; updateField('hero', 'stats', newStats) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Value" />
-                      <input type="text" value={stat.label} onChange={(e) => { const newStats = [...content.hero.stats]; newStats[i].label = e.target.value; updateField('hero', 'stats', newStats) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Label" />
-                      <button onClick={() => { const newStats = content.hero.stats.filter((_: any, idx: number) => idx !== i); updateField('hero', 'stats', newStats) }} className="p-2 text-red-400 hover:text-red-300"><Trash2 className="w-4 h-4" /></button>
+                      <input type="text" value={stat.value} onChange={(e) => { const newStats = [...(content.hero?.stats || [])]; newStats[i].value = e.target.value; updateField('hero', 'stats', newStats) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Value" />
+                      <input type="text" value={stat.label} onChange={(e) => { const newStats = [...(content.hero?.stats || [])]; newStats[i].label = e.target.value; updateField('hero', 'stats', newStats) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Label" />
+                      <button onClick={() => { const newStats = (content.hero?.stats || []).filter((_: any, idx: number) => idx !== i); updateField('hero', 'stats', newStats) }} className="p-2 text-red-400 hover:text-red-300"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   ))}
-                  <button onClick={() => updateField('hero', 'stats', [...content.hero.stats, { value: "0", label: "New Stat" }])} className="mt-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm flex items-center gap-2"><Plus className="w-4 h-4" /> Add Stat</button>
+                  <button onClick={() => updateField('hero', 'stats', [...(content.hero?.stats || []), { value: "0", label: "New Stat" }])} className="mt-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm flex items-center gap-2"><Plus className="w-4 h-4" /> Add Stat</button>
                 </div>
               </div>
             </div>
@@ -852,7 +868,7 @@ export default function AdminPanel() {
                     <Image className="w-4 h-4" />
                     Profile Image
                   </h3>
-                  {content.about.profileImage ? (
+                  {content.about?.profileImage ? (
                     <div className="relative inline-block">
                       <img src={content.about.profileImage} alt="Profile" className="w-32 h-32 object-cover rounded-full border-2 border-purple-500" />
                       <button onClick={() => updateField('about', 'profileImage', '')} className="absolute -top-2 -right-2 p-2 bg-red-600 rounded-full hover:bg-red-500">
@@ -882,27 +898,27 @@ export default function AdminPanel() {
                 </div>
                 <label className="block">
                   <span className="text-sm text-gray-400">Tagline</span>
-                  <input type="text" value={content.about.tagline} onChange={(e) => updateField('about', 'tagline', e.target.value)} className="w-full mt-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none" />
+                  <input type="text" value={content.about?.tagline || ''} onChange={(e) => updateField('about', 'tagline', e.target.value)} className="w-full mt-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none" />
                 </label>
                 <label className="block">
                   <span className="text-sm text-gray-400">Title</span>
-                  <input type="text" value={content.about.title} onChange={(e) => updateField('about', 'title', e.target.value)} className="w-full mt-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none" />
+                  <input type="text" value={content.about?.title || ''} onChange={(e) => updateField('about', 'title', e.target.value)} className="w-full mt-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none" />
                 </label>
                 <label className="block">
                   <span className="text-sm text-gray-400">Description</span>
-                  <textarea value={content.about.description} onChange={(e) => updateField('about', 'description', e.target.value)} rows={4} className="w-full mt-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none" />
+                  <textarea value={content.about?.description || ''} onChange={(e) => updateField('about', 'description', e.target.value)} rows={4} className="w-full mt-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none" />
                 </label>
                 <div className="bg-gray-800 p-4 rounded-lg">
                   <h3 className="font-semibold mb-4">Skills</h3>
                   <div className="flex flex-wrap gap-2">
-                    {content.about.skills.map((skill: string, i: number) => (
+                    {(content.about?.skills || []).map((skill: string, i: number) => (
                       <span key={i} className="px-3 py-1 bg-gray-700 rounded-full flex items-center gap-2">
                         {skill}
-                        <button onClick={() => { const newSkills = content.about.skills.filter((_: any, idx: number) => idx !== i); updateField('about', 'skills', newSkills) }}><X className="w-3 h-3" /></button>
+                        <button onClick={() => { const newSkills = (content.about?.skills || []).filter((_: any, idx: number) => idx !== i); updateField('about', 'skills', newSkills) }}><X className="w-3 h-3" /></button>
                       </span>
                     ))}
                   </div>
-                  <input type="text" placeholder="Add new skill and press Enter" className="w-full mt-3 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none" onKeyDown={(e) => { if (e.key === 'Enter') { updateField('about', 'skills', [...content.about.skills, e.currentTarget.value]); e.currentTarget.value = '' } }} />
+                  <input type="text" placeholder="Add new skill and press Enter" className="w-full mt-3 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none" onKeyDown={(e) => { if (e.key === 'Enter' && e.currentTarget.value.trim()) { updateField('about', 'skills', [...(content.about?.skills || []), e.currentTarget.value.trim()]); e.currentTarget.value = '' } }} />
                 </div>
               </div>
             </div>
@@ -934,18 +950,18 @@ export default function AdminPanel() {
                   <textarea value={content.services.description} onChange={(e) => updateField('services', 'description', e.target.value)} rows={2} className="w-full mt-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none" />
                 </label>
                 <div className="grid gap-4 mt-6">
-                  {content.services.items.map((service: any, i: number) => (
+                  {(content.services?.items || []).map((service: any, i: number) => (
                     <div key={i} className="bg-gray-800 p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-semibold">Service {i + 1}</span>
                         <div className="flex items-center gap-2">
-                          <input type="color" value={service.color} onChange={(e) => { const newItems = [...content.services.items]; newItems[i].color = e.target.value; updateField('services', 'items', newItems) }} className="w-8 h-8 bg-gray-700 border border-gray-600 rounded-lg cursor-pointer" />
+                          <input type="color" value={service.color} onChange={(e) => { const newItems = [...(content.services?.items || [])]; newItems[i].color = e.target.value; updateField('services', 'items', newItems) }} className="w-8 h-8 bg-gray-700 border border-gray-600 rounded-lg cursor-pointer" />
                           <button onClick={() => removeItem('services', i)} className="text-red-400 hover:text-red-300"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
-                        <input type="text" value={service.title} onChange={(e) => { const newItems = [...content.services.items]; newItems[i].title = e.target.value; updateField('services', 'items', newItems) }} className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Title" />
-                        <input type="text" value={service.desc} onChange={(e) => { const newItems = [...content.services.items]; newItems[i].desc = e.target.value; updateField('services', 'items', newItems) }} className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Description" />
+                        <input type="text" value={service.title} onChange={(e) => { const newItems = [...(content.services?.items || [])]; newItems[i].title = e.target.value; updateField('services', 'items', newItems) }} className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Title" />
+                        <input type="text" value={service.desc} onChange={(e) => { const newItems = [...(content.services?.items || [])]; newItems[i].desc = e.target.value; updateField('services', 'items', newItems) }} className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Description" />
                       </div>
                     </div>
                   ))}
@@ -967,11 +983,11 @@ export default function AdminPanel() {
                 </button>
               </div>
               <div className="grid gap-4">
-                {content.skills.items.map((skill: any, i: number) => (
+                {(content.skills?.items || []).map((skill: any, i: number) => (
                   <div key={i} className="bg-gray-800 p-4 rounded-lg flex items-center gap-4">
-                    <input type="text" value={skill.name} onChange={(e) => { const newItems = [...content.skills.items]; newItems[i].name = e.target.value; updateField('skills', 'items', newItems) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" />
-                    <input type="number" value={skill.value} onChange={(e) => { const newItems = [...content.skills.items]; newItems[i].value = parseInt(e.target.value); updateField('skills', 'items', newItems) }} className="w-20 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" />
-                    <input type="color" value={skill.color} onChange={(e) => { const newItems = [...content.skills.items]; newItems[i].color = e.target.value; updateField('skills', 'items', newItems) }} className="w-12 h-10 bg-gray-700 border border-gray-600 rounded-lg cursor-pointer" />
+                    <input type="text" value={skill.name} onChange={(e) => { const newItems = [...(content.skills?.items || [])]; newItems[i].name = e.target.value; updateField('skills', 'items', newItems) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" />
+                    <input type="number" value={skill.value} onChange={(e) => { const newItems = [...(content.skills?.items || [])]; newItems[i].value = parseInt(e.target.value); updateField('skills', 'items', newItems) }} className="w-20 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" />
+                    <input type="color" value={skill.color} onChange={(e) => { const newItems = [...(content.skills?.items || [])]; newItems[i].color = e.target.value; updateField('skills', 'items', newItems) }} className="w-12 h-10 bg-gray-700 border border-gray-600 rounded-lg cursor-pointer" />
                     <button onClick={() => removeItem('skills', i)} className="text-red-400 hover:text-red-300"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 ))}
@@ -992,7 +1008,7 @@ export default function AdminPanel() {
                 </button>
               </div>
               <div className="grid gap-4">
-                {content.testimonials.items.map((testimonial: any, i: number) => (
+                {(content.testimonials?.items || []).map((testimonial: any, i: number) => (
                   <div key={i} className="bg-gray-800 p-4 rounded-lg">
                     <div className="flex items-center justify-between mb-3">
                       <span className="font-semibold">Testimonial {i + 1}</span>
@@ -1004,7 +1020,7 @@ export default function AdminPanel() {
                         {testimonial.profileImage ? (
                           <div className="relative">
                             <img src={testimonial.profileImage} alt="Client" className="w-16 h-16 rounded-full object-cover border-2 border-purple-500" />
-                            <button onClick={() => { const newItems = [...content.testimonials.items]; newItems[i].profileImage = ''; updateField('testimonials', 'items', newItems) }} className="absolute -top-2 -right-2 p-1 bg-red-600 rounded-full">
+                            <button onClick={() => { const newItems = [...(content.testimonials?.items || [])]; newItems[i].profileImage = ''; updateField('testimonials', 'items', newItems) }} className="absolute -top-2 -right-2 p-1 bg-red-600 rounded-full">
                               <X className="w-3 h-3" />
                             </button>
                           </div>
@@ -1017,7 +1033,7 @@ export default function AdminPanel() {
                                 try {
                                   setUploading(true)
                                   const url = await uploadToCloudinary(file, 'image')
-                                  const newItems = [...content.testimonials.items]
+                                  const newItems = [...(content.testimonials?.items || [])]
                                   newItems[i].profileImage = url
                                   updateField('testimonials', 'items', newItems)
                                 } catch (error) {
@@ -1032,10 +1048,10 @@ export default function AdminPanel() {
                         <span className="text-sm text-gray-400">Client Photo</span>
                       </div>
                       <div className="flex gap-3">
-                        <input type="text" value={testimonial.name} onChange={(e) => { const newItems = [...content.testimonials.items]; newItems[i].name = e.target.value; updateField('testimonials', 'items', newItems) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Name" />
-                        <input type="text" value={testimonial.role} onChange={(e) => { const newItems = [...content.testimonials.items]; newItems[i].role = e.target.value; updateField('testimonials', 'items', newItems) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Role" />
+                        <input type="text" value={testimonial.name} onChange={(e) => { const newItems = [...(content.testimonials?.items || [])]; newItems[i].name = e.target.value; updateField('testimonials', 'items', newItems) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Name" />
+                        <input type="text" value={testimonial.role} onChange={(e) => { const newItems = [...(content.testimonials?.items || [])]; newItems[i].role = e.target.value; updateField('testimonials', 'items', newItems) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Role" />
                       </div>
-                      <textarea value={testimonial.text} onChange={(e) => { const newItems = [...content.testimonials.items]; newItems[i].text = e.target.value; updateField('testimonials', 'items', newItems) }} rows={3} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Testimonial text" />
+                      <textarea value={testimonial.text} onChange={(e) => { const newItems = [...(content.testimonials?.items || [])]; newItems[i].text = e.target.value; updateField('testimonials', 'items', newItems) }} rows={3} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Testimonial text" />
                     </div>
                   </div>
                 ))}
@@ -1056,11 +1072,11 @@ export default function AdminPanel() {
                 </button>
               </div>
               <div className="grid gap-4">
-                {content.workflow.steps.map((step: any, i: number) => (
+                {(content.workflow?.steps || []).map((step: any, i: number) => (
                   <div key={i} className="bg-gray-800 p-4 rounded-lg flex items-center gap-4">
                     <span className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold">{i + 1}</span>
-                    <input type="text" value={step.label} onChange={(e) => { const newSteps = [...content.workflow.steps]; newSteps[i].label = e.target.value; updateField('workflow', 'steps', newSteps) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Label" />
-                    <input type="text" value={step.desc} onChange={(e) => { const newSteps = [...content.workflow.steps]; newSteps[i].desc = e.target.value; updateField('workflow', 'steps', newSteps) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Description" />
+                    <input type="text" value={step.label} onChange={(e) => { const newSteps = [...(content.workflow?.steps || [])]; newSteps[i].label = e.target.value; updateField('workflow', 'steps', newSteps) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Label" />
+                    <input type="text" value={step.desc} onChange={(e) => { const newSteps = [...(content.workflow?.steps || [])]; newSteps[i].desc = e.target.value; updateField('workflow', 'steps', newSteps) }} className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Description" />
                     <button onClick={() => removeItem('workflow', i)} className="text-red-400 hover:text-red-300"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 ))}

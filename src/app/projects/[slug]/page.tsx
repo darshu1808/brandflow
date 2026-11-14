@@ -162,6 +162,131 @@ function ProjectVideoCard({
   )
 }
 
+// Paginated Grid Slider Component (3 items for Vertical, 2 items for Horizontal)
+function PaginatedVideoGrid({
+  items,
+  pageSize = 3,
+  aspectRatio = 'vertical',
+  onExpand
+}: {
+  items: any[],
+  pageSize?: number,
+  aspectRatio?: 'vertical' | 'horizontal',
+  onExpand?: (url: string) => void
+}) {
+  const [currentPage, setCurrentPage] = useState(0)
+  const totalPages = Math.ceil(items.length / pageSize)
+
+  // Auto-clamp page index if item list size changes
+  useEffect(() => {
+    if (currentPage >= totalPages && totalPages > 0) {
+      setCurrentPage(totalPages - 1)
+    }
+  }, [items.length, totalPages, currentPage])
+
+  const handlePrev = () => {
+    setCurrentPage((prev) => (prev > 0 ? prev - 1 : totalPages - 1))
+  }
+
+  const handleNext = () => {
+    setCurrentPage((prev) => (prev < totalPages - 1 ? prev + 1 : 0))
+  }
+
+  const currentItems = items.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+
+  return (
+    <div className="relative">
+      {/* Side Arrow: Prev Button (Desktop/Tablet) */}
+      {totalPages > 1 && (
+        <button
+          onClick={handlePrev}
+          className="hidden md:flex absolute -left-5 lg:-left-7 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/80 hover:bg-accent-blue/90 border border-white/20 text-white items-center justify-center shadow-2xl backdrop-blur-md transition-all hover:scale-110 active:scale-95"
+          title="Previous batch"
+          aria-label="Previous batch"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+      )}
+
+      {/* Side Arrow: Next Button (Desktop/Tablet) */}
+      {totalPages > 1 && (
+        <button
+          onClick={handleNext}
+          className="hidden md:flex absolute -right-5 lg:-right-7 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/80 hover:bg-accent-blue/90 border border-white/20 text-white items-center justify-center shadow-2xl backdrop-blur-md transition-all hover:scale-110 active:scale-95"
+          title="Next batch"
+          aria-label="Next batch"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      )}
+
+      {/* Grid Content with Animated Page Transition */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentPage}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.3 }}
+          className={
+            aspectRatio === 'vertical'
+              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
+              : 'grid grid-cols-1 md:grid-cols-2 gap-6'
+          }
+        >
+          {currentItems.map((reel: any, idx: number) => {
+            const normalized = typeof reel === 'string' ? { url: reel } : reel
+            return (
+              <ProjectVideoCard
+                key={normalized.id || `${currentPage}-${idx}`}
+                item={normalized}
+                aspectRatio={aspectRatio}
+                onExpand={onExpand}
+              />
+            )
+          })}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Pagination Controls & Dots (Mobile Buttons + Interactive Indicators) */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-8">
+          <button
+            onClick={handlePrev}
+            className="flex md:hidden items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all active:scale-95"
+            aria-label="Previous"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          <div className="flex items-center gap-2">
+            {Array.from({ length: totalPages }).map((_, pIdx) => (
+              <button
+                key={pIdx}
+                onClick={() => setCurrentPage(pIdx)}
+                className={`h-2.5 rounded-full transition-all duration-300 ${
+                  pIdx === currentPage
+                    ? (aspectRatio === 'vertical' ? 'w-8 bg-purple-400 shadow-lg shadow-purple-500/50' : 'w-8 bg-accent-blue shadow-lg shadow-accent-blue/50')
+                    : 'w-2.5 bg-white/20 hover:bg-white/40'
+                }`}
+                aria-label={`Go to page ${pIdx + 1}`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={handleNext}
+            className="flex md:hidden items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all active:scale-95"
+            aria-label="Next"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ProjectDetailsPage() {
   const params = useParams()
   const slug = params?.slug as string
@@ -456,7 +581,7 @@ export default function ProjectDetailsPage() {
             </div>
           </motion.div>
 
-          {/* Project Media, Reels & Posts (3-Column Grid Layout) */}
+          {/* Project Media, Reels & Posts (Paginated Grid Sliders) */}
           {((currentProject.verticalReels && currentProject.verticalReels.length > 0) ||
             (currentProject.horizontalReels && currentProject.horizontalReels.length > 0) ||
             currentProject.video ||
@@ -470,74 +595,62 @@ export default function ProjectDetailsPage() {
               {/* Section Header */}
               <div className="text-center">
                 <h2 className="text-2xl md:text-4xl font-bold text-white mb-2">
-                  Project <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-blue via-accent-purple to-white">Media & Creatives</span>
+                  Project <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-blue via-accent-purple to-white">Media & Creative Showcase</span>
                 </h2>
                 <p className="text-white/40 text-xs sm:text-sm max-w-xl mx-auto">
-                  Interactive 3-column showcase of video reels, horizontal films, and creative campaign posts.
+                  Interactive showcase of high-converting vertical reels, brand commercials, and campaign creative assets.
                 </p>
               </div>
 
-              {/* 1. Vertical Reels (9:16) - 3 Column Grid */}
+              {/* 1. Campaign Reels & Shorts (3-At-A-Time Grid Slider) */}
               {currentProject.verticalReels && currentProject.verticalReels.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h3 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
-                        <Film className="w-5 h-5 text-purple-400" /> Vertical Reels (9:16)
+                        <Film className="w-5 h-5 text-purple-400" /> Campaign Reels & Shorts
                       </h3>
                       <p className="text-xs text-white/40 mt-1">
-                        Hover with mouse to play • On phone, scroll into view or tap to play
+                        High-retention vertical video storytelling • Hover with mouse to play • On phone, scroll into view or tap to play
                       </p>
                     </div>
                     <span className="text-xs px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-medium">
                       {currentProject.verticalReels.length} Reels
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {currentProject.verticalReels.map((reel: any, idx: number) => {
-                      const normalized = typeof reel === 'string' ? { url: reel } : reel
-                      return (
-                        <ProjectVideoCard
-                          key={normalized.id || idx}
-                          item={normalized}
-                          aspectRatio="vertical"
-                          onExpand={(url) => setActiveVideoModal(url)}
-                        />
-                      )
-                    })}
-                  </div>
+
+                  <PaginatedVideoGrid
+                    items={currentProject.verticalReels}
+                    pageSize={3}
+                    aspectRatio="vertical"
+                    onExpand={(url) => setActiveVideoModal(url)}
+                  />
                 </div>
               )}
 
-              {/* 2. Horizontal Videos (16:9) - 3 Column Grid */}
+              {/* 2. Brand Commercials & Feature Films (2-At-A-Time Grid Slider) */}
               {currentProject.horizontalReels && currentProject.horizontalReels.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h3 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
-                        <Video className="w-5 h-5 text-blue-400" /> Horizontal Videos (16:9)
+                        <Video className="w-5 h-5 text-accent-blue" /> Brand Commercials & Feature Films
                       </h3>
                       <p className="text-xs text-white/40 mt-1">
-                        Hover with mouse to play • On phone, scroll into view or tap to play
+                        Cinematic wide-format campaigns & commercial films • Hover with mouse to play • On phone, scroll into view or tap
                       </p>
                     </div>
                     <span className="text-xs px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-medium">
-                      {currentProject.horizontalReels.length} Videos
+                      {currentProject.horizontalReels.length} Films
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {currentProject.horizontalReels.map((reel: any, idx: number) => {
-                      const normalized = typeof reel === 'string' ? { url: reel } : reel
-                      return (
-                        <ProjectVideoCard
-                          key={normalized.id || idx}
-                          item={normalized}
-                          aspectRatio="horizontal"
-                          onExpand={(url) => setActiveVideoModal(url)}
-                        />
-                      )
-                    })}
-                  </div>
+
+                  <PaginatedVideoGrid
+                    items={currentProject.horizontalReels}
+                    pageSize={2}
+                    aspectRatio="horizontal"
+                    onExpand={(url) => setActiveVideoModal(url)}
+                  />
                 </div>
               )}
 
@@ -545,8 +658,8 @@ export default function ProjectDetailsPage() {
               {(!currentProject.verticalReels || currentProject.verticalReels.length === 0) &&
                (!currentProject.horizontalReels || currentProject.horizontalReels.length === 0) &&
                currentProject.video && (
-                <div className="max-w-2xl mx-auto">
-                  <h3 className="text-xl font-bold text-white mb-4 text-center">Featured Project Video</h3>
+                <div className="max-w-3xl mx-auto">
+                  <h3 className="text-xl font-bold text-white mb-4 text-center">Featured Campaign Video</h3>
                   <ProjectVideoCard
                     item={{ url: currentProject.video }}
                     aspectRatio="horizontal"
@@ -555,20 +668,20 @@ export default function ProjectDetailsPage() {
                 </div>
               )}
 
-              {/* 3. Project Posts & Campaign Creatives (3-Column Grid) */}
+              {/* 3. Campaign Creatives & Visual Assets (3-Column Grid) */}
               {gallery.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h3 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
-                        <ImageIcon className="w-5 h-5 text-accent-blue" /> Campaign Posts & Creative Assets
+                        <ImageIcon className="w-5 h-5 text-green-400" /> Campaign Creatives & Visual Assets
                       </h3>
                       <p className="text-xs text-white/40 mt-1">
-                        High-converting promotional posts, posters, and campaign imagery
+                        High-converting promotional posts, posters, and marketing collateral
                       </p>
                     </div>
-                    <span className="text-xs px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-medium">
-                      {gallery.length} Posts
+                    <span className="text-xs px-3 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/30 font-medium">
+                      {gallery.length} Creatives
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -580,13 +693,13 @@ export default function ProjectDetailsPage() {
                       >
                         <img
                           src={image}
-                          alt={`${currentProject.title} post ${i + 1}`}
+                          alt={`${currentProject.title} creative ${i + 1}`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-white font-medium">Creative Post {i + 1}</span>
+                            <span className="text-xs text-white font-medium">Creative Asset {i + 1}</span>
                             <div className="w-9 h-9 rounded-full bg-accent-blue/80 backdrop-blur-md flex items-center justify-center text-white shadow-lg">
                               <ExternalLink className="w-4 h-4" />
                             </div>
